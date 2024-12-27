@@ -17,7 +17,7 @@ static void dumpFrame(WebsocketFrame frame) {
     case WebsocketHandler::OPCODE_TEXT: opcode = std::string("TEXT"); break;
   }
   ESP_LOGI(
-    TAG,
+    "WebsocketHandler",
     "Fin: %d, OpCode: %d (%s), Mask: %d, Len: %d",
     (int)frame.fin,
     (int)frame.opCode,
