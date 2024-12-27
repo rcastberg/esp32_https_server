@@ -160,15 +160,23 @@ void ResourceResolver::resolveNode(const std::string &method, const std::string 
   }
 }
 
-void ResourceResolver::addMiddleware(const HTTPSMiddlewareFunction * mwFunction) {
+void ResourceResolver::addMiddleware(const HTTPSMiddlewareFunction mwFunction) {
   _middleware.push_back(mwFunction);
 }
 
-void ResourceResolver::removeMiddleware(const HTTPSMiddlewareFunction * mwFunction) {
+void ResourceResolver::addMiddleware(void (*mwFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next)) {
+  _middleware.push_back(HTTPSMiddlewareFunction(mwFunction));
+}
+
+void ResourceResolver::removeMiddleware(const HTTPSMiddlewareFunction mwFunction) {
   _middleware.erase(std::remove(_middleware.begin(), _middleware.end(), mwFunction), _middleware.end());
 }
 
-const std::vector<HTTPSMiddlewareFunction*> ResourceResolver::getMiddleware() {
+void ResourceResolver::removeMiddleware(void (*mwFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next)) {
+  _middleware.erase(std::remove(_middleware.begin(), _middleware.end(), mwFunction), _middleware.end());
+}
+
+const std::vector<HTTPSMiddlewareFunction> ResourceResolver::getMiddleware() {
   return _middleware;
 }
 

@@ -30,11 +30,13 @@ public:
   void resolveNode(const std::string &method, const std::string &url, ResolvedResource &resolvedResource, HTTPNodeType nodeType);
 
   /** Add a middleware function to the end of the middleware function chain. See HTTPSMiddlewareFunction.hpp for details. */
-  void addMiddleware(const HTTPSMiddlewareFunction * mwFunction);
+  void addMiddleware(const HTTPSMiddlewareFunction mwFunction);
+  void addMiddleware(void (*mwFunction)(HTTPRequest *req, HTTPResponse *res, std::function<void()> next));
   /** Remove a specific function from the middleware function chain. */
-  void removeMiddleware(const HTTPSMiddlewareFunction * mwFunction);
+  void removeMiddleware(const HTTPSMiddlewareFunction mwFunction);
+  void removeMiddleware(void (*mwFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next));
   /** Get the current middleware chain with a resource function at the end */
-  const std::vector<HTTPSMiddlewareFunction*> getMiddleware();
+  const std::vector<HTTPSMiddlewareFunction> getMiddleware();
 
 private:
 
@@ -43,7 +45,7 @@ private:
   HTTPNode * _defaultNode;
 
   // Middleware functions, if any are registered. Will be called in order of the vector.
-  std::vector<const HTTPSMiddlewareFunction*> _middleware;
+  std::vector<HTTPSMiddlewareFunction> _middleware;
 };
 
 } /* namespace httpsserver */

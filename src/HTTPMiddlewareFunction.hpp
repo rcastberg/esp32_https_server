@@ -21,6 +21,8 @@ namespace httpsserver {
    * handling in case of missing authentication. Don't forget to call next in case you want to access your
    * resources, though.
    */
-  typedef void (HTTPSMiddlewareFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next);
+  typedef std::function<void(HTTPRequest * req, HTTPResponse * res, std::function<void()> next)> HTTPSMiddlewareFunction;
+
+  bool operator==(const HTTPSMiddlewareFunction& lhs, const HTTPSMiddlewareFunction& rhs);
 }
  #endif /* SRC_HTTPMIDDLEWAREFUNCTION_HPP_ */
