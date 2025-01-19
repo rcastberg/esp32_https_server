@@ -2,6 +2,21 @@
 
 namespace httpsserver {
 
+ResourceResolver::HTTPSMiddlewareFunctionCallback::HTTPSMiddlewareFunctionCallback(const HTTPSMiddlewareFunction callback, const HTTPSMiddlewareFunction* callback_std_function, const HTTPSMiddlewareFunctionType* callback_raw_pointer) : _callback(callback), _callback_std_function(callback_std_function), _callback_raw_pointer(callback_raw_pointer) {
+};
+
+HTTPSMiddlewareFunction ResourceResolver::HTTPSMiddlewareFunctionCallback::getCallback() {
+  return _callback;
+};
+
+const HTTPSMiddlewareFunction* ResourceResolver::HTTPSMiddlewareFunctionCallback::getStdFunctionPointer() {
+  return _callback_std_function;
+};
+
+const HTTPSMiddlewareFunctionType* ResourceResolver::HTTPSMiddlewareFunctionCallback::getRawFunctionPointer() {
+  return _callback_raw_pointer;
+};
+
 ResourceResolver::ResourceResolver() {
   _nodes = new std::vector<HTTPNode *>();
   _defaultNode = NULL;
@@ -160,20 +175,68 @@ void ResourceResolver::resolveNode(const std::string &method, const std::string 
   }
 }
 
-void ResourceResolver::addMiddleware(const HTTPSMiddlewareFunction mwFunction) {
+void ResourceResolver::updateMiddlewareList() {
+  _middleware.clear();
+  _middleware.reserve(_middleware_callback.size());
+  for (auto& callback : _middleware_callback) {
+    _middleware.push_back(callback.getCallback());
+  }
+}
+
+void ResourceResolver::addMiddleware(const HTTPSMiddlewareFunction &mwFunction) {
+  const HTTPSMiddlewareFunctionCallback callback{
+    mwFunction,
+    &mwFunction,
+    nullptr
+  };
   _middleware.push_back(mwFunction);
+  _middleware_callback.push_back(callback);
 }
 
 void ResourceResolver::addMiddleware(void (*mwFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next)) {
-  _middleware.push_back(HTTPSMiddlewareFunction(mwFunction));
+  auto mwFunction_callback = HTTPSMiddlewareFunction(mwFunction);
+  const HTTPSMiddlewareFunctionCallback callback{
+    mwFunction_callback,
+    &mwFunction_callback,
+    mwFunction
+  };
+  _middleware.push_back(mwFunction_callback);
+  _middleware_callback.push_back(callback);
 }
 
-void ResourceResolver::removeMiddleware(const HTTPSMiddlewareFunction mwFunction) {
-  _middleware.erase(std::remove(_middleware.begin(), _middleware.end(), mwFunction), _middleware.end());
+void ResourceResolver::removeMiddleware(const HTTPSMiddlewareFunction &mwFunction) {
+  bool found = false;
+  for (auto it = _middleware_callback.begin(); it != _middleware_callback.end();) {
+    auto element = *it;
+    const auto callback = element.getStdFunctionPointer();
+    const auto callback_supplied = &mwFunction;
+    if (callback != nullptr && callback == callback_supplied) {
+      it = _middleware_callback.erase(it);
+      found = true;
+    } else {
+      ++it;
+    }
+  }
+  if (found) {
+    updateMiddlewareList();
+  }
 }
 
 void ResourceResolver::removeMiddleware(void (*mwFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next)) {
-  _middleware.erase(std::remove(_middleware.begin(), _middleware.end(), mwFunction), _middleware.end());
+  bool found = false;
+  for (auto it = _middleware_callback.begin(); it != _middleware_callback.end();) {
+    auto element = *it;
+    auto callback = element.getRawFunctionPointer();
+    if (callback != nullptr && callback == mwFunction) {
+      it = _middleware_callback.erase(it);
+      found = true;
+    } else {
+      ++it;
+    }
+  }
+  if (found) {
+    updateMiddlewareList();
+  }
 }
 
 const std::vector<HTTPSMiddlewareFunction> ResourceResolver::getMiddleware() {
