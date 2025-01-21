@@ -9,6 +9,7 @@
 
 namespace httpsserver {
   class HTTPRequest;
+  using HTTPSMiddlewareFunctionType = void(HTTPRequest * req, HTTPResponse * res, std::function<void()> next);
   /**
    * \brief A middleware function that can be registered at the server.
    *
@@ -21,6 +22,6 @@ namespace httpsserver {
    * handling in case of missing authentication. Don't forget to call next in case you want to access your
    * resources, though.
    */
-  typedef void (HTTPSMiddlewareFunction)(HTTPRequest * req, HTTPResponse * res, std::function<void()> next);
+  typedef std::function<HTTPSMiddlewareFunctionType> HTTPSMiddlewareFunction;
 }
  #endif /* SRC_HTTPMIDDLEWAREFUNCTION_HPP_ */
